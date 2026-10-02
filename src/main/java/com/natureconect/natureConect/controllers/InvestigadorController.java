@@ -32,7 +32,7 @@ public class InvestigadorController {
     /**
      * clave para la autentificacion de los investigadores
      */
-    private static final String SECRET_KEY = "123456789101112131415161718192021222324252627282930";
+    private static final String SECRET_KEY = "**********************";
 
     /**
      * metodo para registrar un investigador
