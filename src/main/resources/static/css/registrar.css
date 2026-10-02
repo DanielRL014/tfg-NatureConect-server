@@ -1,0 +1,93 @@
+body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #e1f3dc;
+    color: #333;
+    padding: 20px;
+}
+
+h2 {
+    color: #3a633e;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.login-box {
+    max-width: 400px;
+    margin: 0 auto;
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.input-group {
+    margin-bottom: 20px;
+}
+
+.input-group label {
+    font-size: 14px;
+    display: block;
+    color: #3a633e;
+    margin-bottom: 5px;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 10px;
+    border: 1px solid #b2d8b2;
+    background-color: #f1fff0;
+    font-size: 14px;
+}
+
+.buttons {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+button {
+    padding: 8px 12px;
+    border-radius: 10px;
+    border: 1px solid #b2d8b2;
+    background-color: #7ec488;
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+    flex: 1;
+}
+
+button.clear-btn {
+    background-color: #f1fff0;
+    color: #333;
+}
+
+button.clear-btn:hover {
+    background-color: #e1f3dc;
+}
+
+button:hover {
+    background-color: #65a971;
+}
+
+.login {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 14px;
+    color: #333;
+}
+
+.login a {
+    color: #3a633e;
+    text-decoration: none;
+}
+
+.login a:hover {
+    text-decoration: underline;
+}
+
+#loginMessage {
+    text-align: center;
+    color: red;
+}

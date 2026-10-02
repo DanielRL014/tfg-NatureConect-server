@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Informe de aves</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css" />
+    <link rel="stylesheet" href="/css/informe.css">
+</head>
+<body>
+<div class="filtros">
+    <select id="seleccionarEspecie">
+        <option value="">Cargando especies...</option>
+    </select>
+    <input type="date" id="fechaInicio">
+    <input type="date" id="fechaFin">
+    <button id="cargarDatos">Cargar Datos</button>
+</div>
+
+<div class="contenido">
+
+    <div id="mapa" style="height: 400px; width: 100%; margin-top: 20px;"></div>
+
+    <div class="graficos">
+        <canvas id="graficoBarras" width="400" height="200"></canvas>
+        <canvas id="graficoLineas" width="400" height="200"></canvas>
+    </div>
+</div>
+<script>
+    let graficoBarras, graficoLineas;
+
+
+
+    const mapa = L.map('mapa').setView([40.4168, -3.7038], 6);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: 'Map data © <a href="https://www.openstreetmap.org/copyright"> OpenStreetMap </a>contributors'
+    }).addTo(mapa);
+
+    const bounds = L.latLngBounds(
+        L.latLng(35.9, -10.0),
+        L.latLng(43.9, 4.5)
+    );
+
+    mapa.setMaxBounds(bounds);
+    mapa.on('drag', function () {
+        mapa.panInsideBounds(bounds, { animate: false });
+    });
+
+    window.addEventListener('DOMContentLoaded', async () => {
+        const select = document.getElementById('seleccionarEspecie');
+        try {
+            const res = await fetch('/api/ave/listar');
+            const json = await res.json();
+
+            if (!json.success || !Array.isArray(json.data)) {
+                throw new Error('Formato inesperado');
+            }
+
+            const especies = json.data;
+
+            select.innerHTML = '<option value="">Seleccione una especie</option>';
+            especies.forEach(especie => {
+                const opt = document.createElement('option');
+                opt.value = especie.id;
+                opt.textContent = `${especie.nombreComun} (${especie.nombreCientifico})`;
+                select.appendChild(opt);
+            });
+        } catch (err) {
+            console.error('Error al cargar especies:', err);
+            select.innerHTML = '<option value="">Error al cargar especies</option>';
+        }
+    });
+
+
+    document.getElementById('cargarDatos').addEventListener('click', async () => {
+        const especieId = document.getElementById('seleccionarEspecie').value;
+        const fechaInicio = document.getElementById('fechaInicio').value;
+        const fechaFin = document.getElementById('fechaFin').value;
+
+        if (!especieId) return alert('Selecciona una especie');
+
+        const url = `/api/publicacion/especie?id=${especieId}&desde=${fechaInicio}&hasta=${fechaFin}`;
+
+        try {
+            const response = await fetch(url);
+            const json = await response.json();
+
+            if (!json.success) throw new Error("API indicó error");
+
+            const { lineaAnual, barrasMensuales, mapaCalor } = json.data;
+
+            actualizarMapa(mapaCalor);
+            actualizarGraficoBarras(barrasMensuales);
+            actualizarGraficoLineas(lineaAnual);
+
+        } catch (error) {
+            console.error(error);
+            alert('Error al obtener los datos');
+        }
+    });
+
+
+    function actualizarMapa(ubicaciones) {
+        mapa.eachLayer(layer => {
+            if (layer instanceof L.HeatLayer || layer instanceof L.Circle) {
+                mapa.removeLayer(layer);
+            }
+        });
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapa);
+
+        if (ubicaciones.length === 0) return;
+
+        const puntos = ubicaciones.map(u => [u.lat, u.lng, u.intensidad || 250]);
+        L.heatLayer(puntos, { radius: 25 }).addTo(mapa);
+    }
+
+    function actualizarGraficoBarras(datos) {
+        if (graficoBarras) graficoBarras.destroy();
+
+        const anio = Object.keys(datos)[0];
+        const mesesObj = datos[anio];
+
+        // Orden cronológico de los meses
+        const ordenMeses = [
+            "enero", "febrero", "marzo", "abril", "mayo", "junio",
+            "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
+        ];
+
+        // Filtra y ordena los meses según el orden definido
+        const mesesOrdenados = ordenMeses.filter(mes => mesesObj.hasOwnProperty(mes));
+        const valoresOrdenados = mesesOrdenados.map(mes => mesesObj[mes]);
+
+        graficoBarras = new Chart(document.getElementById('graficoBarras'), {
+            type: 'bar',
+            data: {
+                labels: mesesOrdenados,
+                datasets: [{
+                    label: `Avistamientos por Mes (${anio})`,
+                    data: valoresOrdenados,
+                    backgroundColor: 'rgba(75, 192, 192, 0.4)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+    }
+
+
+
+
+    function actualizarGraficoLineas(datos) {
+        if (graficoLineas) graficoLineas.destroy();
+        graficoLineas = new Chart(document.getElementById('graficoLineas'), {
+            type: 'line',
+            data: {
+                labels: datos.map(e => e.anio),
+                datasets: [{
+                    label: 'Avistamientos por Año',
+                    data: datos.map(e => e.total),
+                    fill: false,
+                    borderColor: 'rgba(153, 102, 255, 1)',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    }
+</script>
+</body>
+</html>
