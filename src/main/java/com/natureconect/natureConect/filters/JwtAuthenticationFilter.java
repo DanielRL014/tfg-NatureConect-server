@@ -21,7 +21,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     /**
      * contraseña para la incriptación
      */
-    private static final String SECRET_KEY = "123456789101112131415161718192021222324252627282930";
+    private static final String SECRET_KEY = "*********";
 
     /**
      * configuracion del filtro
