@@ -1,0 +1,7 @@
+com.natureconect.natureConect
+com.natureconect.natureConect.controllers
+com.natureconect.natureConect.filters
+com.natureconect.natureConect.models
+com.natureconect.natureConect.repository
+com.natureconect.natureConect.security
+com.natureconect.natureConect.service
